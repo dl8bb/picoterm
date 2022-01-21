@@ -35,6 +35,7 @@
 #include "bsp/board.h"
 #include "tusb.h"
 
+#include "keycode_to_ascii.h"
 
 
 // #include "tusb_config.h"

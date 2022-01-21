@@ -99,7 +99,7 @@ int hspeed = 1 << COORD_SHIFT;
 int hpos;
 int vpos;
 
-static const int input_pin0 = 22;
+//static const int input_pin0 = 22;
 
 
 // this is how a line of 8 bits is stored
@@ -125,9 +125,9 @@ uint32_t block[] = {
 //auto_init_mutex(frame_logic_mutex);
 struct mutex frame_logic_mutex;
 
-static int left = 0;
-static int top = 0;
-static int x_sprites = 1;
+//static int left = 0;
+//static int top = 0;
+//static int x_sprites = 1;
 
 void go_core1(void (*execute)());
 void init_render_state(int core);
@@ -152,7 +152,7 @@ void hid_app_task(void);
 
 
 void render_loop() {
-    static uint8_t last_input = 0;
+//    static uint8_t last_input = 0;
     static uint32_t last_frame_num = 0;
     int core_num = get_core_num();
     assert(core_num >= 0 && core_num < 2);
@@ -251,7 +251,7 @@ void build_font() {
     uint16_t colors[16];
     for (int i = 0; i < count_of(colors); i++) {
         colors[i] = PICO_SCANVIDEO_PIXEL_FROM_RGB5(1, 1, 1) * ((i * 3) / 2);
-        if (i) i != 0x8000;
+//        if (i) { i != 0x8000; }
     }
 
     // 4 is bytes per word, range_length is #chrs in font, FONT_SIZE_WORDS is words in width * font height
@@ -328,6 +328,7 @@ int video_main(void) {
     render_loop();          
 #endif
 
+    return 0;
 }
 
 
@@ -370,9 +371,9 @@ static __not_in_flash("y") uint16_t end_of_line[] = {
 bool render_scanline_bg(struct scanvideo_scanline_buffer *dest, int core) {
     // 1 + line_num red, then white
     uint32_t *buf = dest->data;
-    size_t buf_length = dest->data_max;
+//    size_t buf_length = dest->data_max;
     int y = scanvideo_scanline_number(dest->scanline_id) + vpos;
-    int x = hpos;
+//    int x = hpos;
 
     // we handle both ends separately
 //    static const uint32_t end_of_line[] = {
@@ -394,7 +395,7 @@ bool render_scanline_bg(struct scanvideo_scanline_buffer *dest, int core) {
 
     *output32++ = host_safe_hw_ptr(beginning_of_line);
     uint32_t *dbase = font_raw_pixels + FONT_WIDTH_WORDS * (y % FONT_HEIGHT);
-    int cmax = font->dsc->cmaps[0].range_length;
+//    int cmax = font->dsc->cmaps[0].range_length;
     
 
 
@@ -734,8 +735,15 @@ void led_blinking_task(void)
 
 #define MAX_REPORT  4
 
-
+#ifdef LOCALISE_DE
+static uint8_t const keycode2ascii[128][2] =  { HID_KEYCODE_TO_ASCII_DE };
+#elif LOCALISE_UK
+static uint8_t const keycode2ascii[128][2] =  { HID_KEYCODE_TO_ASCII_UK };
+#elif LOCALISE_US
+static uint8_t const keycode2ascii[128][2] =  { HID_KEYCODE_TO_ASCII_US };
+#else
 static uint8_t const keycode2ascii[128][2] =  { HID_KEYCODE_TO_ASCII };
+#endif
 
 // Each HID instance can has multiple reports
 static uint8_t _report_count[CFG_TUH_HID];
@@ -870,7 +878,7 @@ static void process_kbd_report(hid_keyboard_report_t const *report)
       capslock_on = !capslock_on;
   }
 
-  //------------- example code ignore control (non-printable) key affects -------------//
+  //------------- based on example code  -------------//
   for(uint8_t i=0; i<6; i++)
   {
     if ( report->keycode[i] )
@@ -884,8 +892,18 @@ static void process_kbd_report(hid_keyboard_report_t const *report)
 
         bool const is_ctrl =  report->modifier & (KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_RIGHTCTRL);
         bool const is_shift =  report->modifier & (KEYBOARD_MODIFIER_LEFTSHIFT | KEYBOARD_MODIFIER_RIGHTSHIFT);
+        bool const is_alt_gr =  report->modifier & (KEYBOARD_MODIFIER_RIGHTALT);
         uint8_t ch = keycode2ascii[report->keycode[i]][is_shift ? 1 : 0];
         
+        // special case for de keyboard
+        #ifdef LOCALISE_DE
+          if(is_alt_gr){
+              ch = keycode2ascii[report->keycode[i]][2];
+          }
+        #endif
+        
+
+
         if(report->keycode[i]!=HID_KEY_CAPS_LOCK){
           if(is_ctrl && ch>95){
               uart_putc (UART_ID, ch-96);
@@ -915,7 +933,6 @@ static void process_kbd_report(hid_keyboard_report_t const *report)
   prev_report = *report;
   capslock_key_down_in_last_report = capslock_key_down_in_this_report;
 }
-
 //--------------------------------------------------------------------+
 // Mouse
 //--------------------------------------------------------------------+
