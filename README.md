@@ -1,7 +1,7 @@
 # picoterm
 Pi Pico VGA Terminal Emulator For RC2014
 
-Added the german layout but still unable to run the resulting picoterm.uf2 on the pioc.
+# Added the german layout but still unable to run the resulting picoterm.uf2 on the pioc.
 
 PicoTerm is a terminal emulator written specifically for this module. Currently it runs 80 columns by 30 lines in black and white mode. Switching to 40 column colour version will be available shortly. It can use VT100 style escape codes, with support for the following
 
